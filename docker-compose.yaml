@@ -1,0 +1,12 @@
+services:
+  api:
+    build:
+      context: ./backend-example
+      dockerfile: Dockerfile
+      target: runner # ensures it uses your runner stage
+    container_name: backend-example
+    env_file:
+      - .env # loads environment variables
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
