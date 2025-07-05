@@ -49,7 +49,7 @@ receivers:
                 service: "grafana"
                 group: "infrastructure"
 
-        # Scrape from the Mythical Server and Requester service.
+        # Scrape from backend-example application.
         - job_name: "backend-example"
           scrape_interval: 2s
           static_configs:
@@ -123,11 +123,20 @@ connectors:
 # Define exporters to data stores.
 # See https://opentelemetry.io/docs/collector/configuration/#exporters
 # Also see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor#recommended-processors
+# otlp prefix is for OTLP gRPC exporter and otlphttp prefix is for OTLP Http exporter
 exporters:
   # Exporter for sending trace data to Tempo.
-  otlp/grafana:
+  otlp/tempo:
     # Send to the locally running Tempo service. Sending it to Tempo's gRPC receiver.
     endpoint: tempo:4317
+    # TLS is not enabled for the instance.
+    tls:
+      insecure: true
+
+  # Exporter for sending trace data to Loki.
+  otlphttp/loki:
+    # Send to the locally running Loki service.
+    endpoint: http://loki:3100/otlp
     # TLS is not enabled for the instance.
     tls:
       insecure: true
@@ -155,11 +164,11 @@ service:
       # Comment out other `processor` definitions and uncomment the line below to generate service graph metrics
       # from within the OpenTelemetry Collector.
       #processors: [servicegraph, batch]
-      # Export to the `otlp/grafana` exporter.
-      exporters: [otlp/grafana]
+      # Export to the `otlp/tempo` exporter.
+      exporters: [otlp/tempo]
       # Comment out other `exporters` definitions and uncomment the line below to generate span metrics
       # from within the OpenTelemetry Collector as well as exporting traces to Tempo.
-      #exporters: [otlp/grafana, spanmetrics]
+      #exporters: [otlp/tempo, spanmetrics]
 
     # Define the metrics pipeline.
     metrics:
@@ -172,3 +181,12 @@ service:
       processors: [batch]
       # Export to the `prometheusremtotewrite` exporter.
       exporters: [prometheusremotewrite]
+
+    # Define the logs pipeline
+    logs:
+      # Receive from the `otlp` receiver.
+      receivers: [otlp]
+      # Use the `batch` processor to process received trace spans.
+      processors: [batch]
+      # Export to the `otlphttp/loki` exporter.
+      exporters: [otlphttp/loki]
