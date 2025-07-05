@@ -1,2 +1,3 @@
 # lgtm-stack
-Loki Logs, Grafana, Tempo Trace, Prometheus Metrics, OpenTelemetry Collector
+
+Loki, Grafana, Tempo, Mimir, along with OpenTelemetry Collector.

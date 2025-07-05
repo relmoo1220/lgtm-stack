@@ -1,12 +1,61 @@
 services:
-  api:
+  backend-example:
     build:
       context: ./backend-example
       dockerfile: Dockerfile
       target: runner # ensures it uses your runner stage
     container_name: backend-example
     env_file:
-      - .env # loads environment variables
+      - ./backend-example/.env # loads environment variables
     ports:
-      - "3000:3000"
+      - "5555:5555" # backend-example application is running on port 5555, so we expose port 5555
     restart: unless-stopped
+    depends_on:
+      - opentelemetry-collector
+  loki:
+    build:
+      context: ./loki
+      dockerfile: Dockerfile
+    container_name: loki
+    ports:
+      - "3100:3100" # loki running on port 3100, so we expose port 3100
+    restart: unless-stopped
+  tempo:
+    build:
+      context: ./tempo
+      dockerfile: Dockerfile
+    container_name: tempo
+    ports:
+      - "3200:3200" # tempo running on port 3200, so we expose port 3200
+    restart: unless-stopped
+  mimir:
+    build:
+      context: ./mimir
+      dockerfile: Dockerfile
+    container_name: mimir
+    ports:
+      - "9009:9009" # mimir running on port 9009, so we expose port 9009
+    restart: unless-stopped
+  grafana:
+    build:
+      context: ./grafana
+      dockerfile: Dockerfile
+    container_name: grafana
+    ports:
+      - "3000:3000" # grafana running on port 3000, so we expose port 3000
+    restart: unless-stopped
+    depends_on:
+      - mimir
+      - tempo
+      - loki
+      - opentelemetry-collector
+  opentelemetry-collector:
+    build:
+      context: ./otel-collector
+      dockerfile: Dockerfile
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
+    depends_on:
+      - tempo
+      - mimir
