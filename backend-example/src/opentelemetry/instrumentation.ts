@@ -1,4 +1,6 @@
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { Resource } from '@opentelemetry/resources';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import {
   LoggerProvider,
   BatchLogRecordProcessor,
@@ -32,12 +34,21 @@ const traceExporter = new OTLPTraceExporter({
 });
 const spanProcessor = new BatchSpanProcessor(traceExporter);
 
-// Export prometheus compatible metrics on port 8081 over to Mimir
+// Export prometheus compatible metrics on port 8081 of this application over to OTel and forwarded to Mimir
 const metricReader = new PrometheusExporter({
   port: 8081,
 });
 
+// Initialize OpenTelemetry NodeSDK
+// This sets up auto-instrumentation for supported libraries (like HTTP, Pino, etc.),
+// collects telemetry data (traces, logs, metrics) from the application,
+// and exports it to the OpenTelemetry Collector or backend using OTLP for traces and logs,
+// and Prometheus-compatible format for metrics (scraped on port 8081).
 const otelSDK = new NodeSDK({
+  // Tag logs, traces, metrics with APP_NAME
+  resource: resourceFromAttributes({
+    [ATTR_SERVICE_NAME]: process.env.APP_NAME || 'unknown-service',
+  }),
   metricReader, // Send metrics via OTel
   spanProcessors: [spanProcessor], // Send traces via OTel
   logRecordProcessors: [logProcessor], // Send logs via OTel
@@ -51,8 +62,9 @@ const otelSDK = new NodeSDK({
         enabled: true,
         // Add each log record with service.name attribute
         logHook: (_span, logRecord) => {
+          // ATTR_SERVICE_NAME is a constant representing the OpenTelemetry semantic convention attribute key for the service name.
           logRecord[ATTR_SERVICE_NAME] =
-            process.env.OTEL_SERVICE_NAME || 'unknown-service';
+            process.env.APP_NAME || 'unknown-service';
         },
       },
     }),

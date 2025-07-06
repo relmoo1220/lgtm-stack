@@ -8,6 +8,7 @@ services:
     env_file:
       - ./backend-example/.env # loads environment variables
     ports:
+      - "8081:8081" # backend-example application prometheus compatible metrics on port 8081
       - "5555:5555" # backend-example application is running on port 5555, so we expose port 5555
     restart: unless-stopped
     depends_on:

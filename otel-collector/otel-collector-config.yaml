@@ -2,6 +2,7 @@
 # See https://opentelemetry.io/docs/collector/configuration/#receivers
 receivers:
   # Configure receiving OTLP data via gRPC on port 4317 and HTTP on port 4318.
+  # 0.0.0.0 means listens to all available network interaces.
   otlp:
     protocols:
       grpc:
@@ -85,7 +86,9 @@ processors:
         },
       ]
 
-# Define processors to process received data.
+# Define connectors to join two pipelines, acting as both exporter and receiver. 
+# A connector consumes data as an exporter at the end of one pipeline and emits data as a receiver at the beginning of another pipeline.
+# The data consumed and emitted may be of the same type or of different data types. You can use connectors to summarize consumed data, replicate it, or route it.
 # See https://opentelemetry.io/docs/collector/configuration/#connectors
 connectors:
   # The spanmetrics connector is used to output span metrics based on received trace spans.
