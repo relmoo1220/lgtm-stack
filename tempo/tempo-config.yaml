@@ -19,6 +19,8 @@ compactor:
 
 metrics_generator:
   registry:
+    # Adds static labels (source=tempo and cluster=docker-compose) to all generated metrics.
+    # This helps with filtering and identifying metrics in Prometheus or Grafana.
     external_labels:
       source: tempo
       cluster: docker-compose

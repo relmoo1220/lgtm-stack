@@ -136,7 +136,7 @@ exporters:
     tls:
       insecure: true
 
-  # Exporter for sending trace data to Loki.
+  # Exporter for sending logs data to Loki.
   otlphttp/loki:
     # Send to the locally running Loki service.
     endpoint: http://loki:3100/otlp
