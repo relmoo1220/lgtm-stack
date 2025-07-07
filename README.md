@@ -9,7 +9,9 @@ This is a sample/tutorial project on configuring a local LGTM stack along with O
 
 ## Overview and Diagram
 
-Put image here...
+The diagram below shows how everything communicates with one another to provide an overview of this example project.
+
+![Diagram](lgtm.svg)
 
 ## Setting up NestJS and send logs, traces and metrics to OpenTelemetry
 
@@ -126,6 +128,10 @@ For `otlp/tempo`, we are sending our traces over to Tempo using `gRPC`. Therefor
 
 We are using the `prometheusremotewrite` exporter to send metrics over to our Mimir service through `HTTP` endpoint of `http://mimir:9009/api/v1/push`.
 
+We use the `prometheusremotewrite` exporter because Grafana Mimir is compatible with Prometheus's remote write protocol, which allows it to ingest time series data directly from Prometheus or any compatible source — like the OpenTelemetry Collector.
+
+This setup enables the Collector to forward metrics in Prometheus remote write format to Mimir over HTTP.
+
 ### Service
 
 Finally, we defined the full service graph for the OpenTelemetry collector.
@@ -166,7 +172,7 @@ In the `server` section, we are setting Loki to run on port `3100` and `log_leve
 
 Hence, you can see that in the previously mentioned `otel-collector-config.yaml`, we are scraping Loki metrics through port `3100` and also exporting logs to Loki through a `HTTP` endpoint on port `3100`.
 
-Scraping Loki metrics on port `3100`:
+Scraping Loki metrics on port `3100` in `otel-collector-config.yaml`:
 
 ```yaml
 - job_name: "loki"
@@ -177,7 +183,7 @@ Scraping Loki metrics on port `3100`:
         group: "infrastructure"
 ```
 
-Exporting logs to Loki through a `HTTP` endpoint on port `3100`:
+Exporting logs to Loki through a `HTTP` endpoint on port `3100` in `otel-collector-config.yaml`:
 
 ```yaml
 otlphttp/loki:
@@ -228,6 +234,8 @@ In the `tempo-config.yaml`, there are many configurations that can be made. Howe
 
 In the `server` section, you can see that we are running our Tempo on port `3200`. Therefore, in `otel-collector-config.yaml` we are scraping Tempo metrics on Tempo's port `3200`.
 
+Scraping from Tempo in `otel-collector-config.yaml`:
+
 ```yaml
 - job_name: "tempo"
   static_configs:
@@ -245,6 +253,8 @@ In the `distributor` section, the `receivers` section is being set to take in `o
 - `grpc` is set to accept traces sent through OTLP gRPC on port `4317`
 
 Therefore, in our `otel-collector-config.yaml` `exporters` section we are exporting trace data over to Tempo's gRPC receiver.
+
+Exporting traces to Tempo through gRPC in `otel-collector-config.yaml`:
 
 ```yaml
 otlp/tempo:
@@ -267,7 +277,7 @@ In the `mimir-config.yaml`, there are many configurations that can be made. Howe
 
 In the `server` section we are setting Mimir to run on port `9009` and `log_level` is set to `info` (which means that messages are logged at info level). Therefore, in `otel-collector-config.yaml` we can see that we are scraping Mimir's metrics through port `9009` and also exporting metrics to Mimir on an endpoint which is also through port `9009`.
 
-Scraping Mimir metrics on port `9009`:
+Scraping Mimir metrics on port `9009` in `otel-collector-config.yaml` :
 
 ```yaml
 - job_name: "mimir"
@@ -278,7 +288,7 @@ Scraping Mimir metrics on port `9009`:
         group: "infrastructure"
 ```
 
-Exporting metrics to Mimir through a `HTTP` endpoint on port `9009`:
+Exporting metrics to Mimir through a `HTTP` endpoint on port `9009` in `otel-collector-config.yaml` :
 
 ```yaml
 prometheusremotewrite:
